@@ -30,14 +30,10 @@ func main() {
 
 	var number uint32 = 0
 	for {
-		select {
-		case msg, ok := <-m.MessengeChan:
-			if ok {
-				fmt.Printf("%3d: %s\n", number, msg)
-			}
-		default:
-			continue
+		msg, ok := <-m.MessengeChan
+		number++
+		if ok {
+			fmt.Printf("%d: %s\n", number, msg)
 		}
 	}
-
 }
