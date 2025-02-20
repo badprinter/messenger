@@ -1,7 +1,4 @@
+PROG=cmd/messenger/messenger.go
+run:
+	go run $(PROG)
 
-
-run: build
-    build/messenger
-
-build:
-    go build -o build/messenger

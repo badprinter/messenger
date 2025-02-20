@@ -42,11 +42,19 @@ func (m *Messenger) Run() error {
 	return nil
 }
 
+func (m *Messenger) SendMessenge(msg string) {
+	tunnels := m.lobby.GetTunels()
+	for _, v := range tunnels {
+		go v.Write([]byte(msg))
+	}
+}
+
 func (m *Messenger) lobbyManager() {
-	for {
+	for isClose := false; !isClose; isClose = <-m.stoperChan {
 		c, err := m.service.Accept()
 		if err != nil {
-			log.Println(err)
+
+			log.Println("lobbyManager ", err)
 			continue
 		}
 		m.lobby.Add(c)
@@ -63,6 +71,14 @@ func readMesseng(c net.Conn, ch chan string) {
 		}
 		ch <- scanner.Text()
 	}
+}
+
+func (m *Messenger) GetMesseng() string {
+	msg, ok := <-m.MessengeChan
+	if ok {
+		return msg
+	}
+	return ""
 }
 
 // TODO переписать входные параметры

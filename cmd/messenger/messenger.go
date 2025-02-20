@@ -28,12 +28,26 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var number uint32 = 0
+	fmt.Printf("Server run with options:\nHost: %s\nPort: %s\n\n", cfg.Net.Host, cfg.Net.Port)
+
+	go PrintMessengs(m)
+	Sendler(m)
+}
+
+func Sendler(m *server.Messenger) {
+	var msg string
 	for {
-		msg, ok := <-m.MessengeChan
-		number++
-		if ok {
-			fmt.Printf("%d: %s\n", number, msg)
+		fmt.Scan(msg)
+		m.SendMessenge(msg)
+	}
+}
+
+func PrintMessengs(m *server.Messenger) {
+	var msg string
+	for {
+		msg = m.GetMesseng()
+		if msg != "" {
+			fmt.Printf("%s\n", msg)
 		}
 	}
 }
