@@ -7,6 +7,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/badprinter/messenger/internal/config"
+	"github.com/badprinter/messenger/internal/inputcontrol"
 	"github.com/badprinter/messenger/pkg/server"
 )
 
@@ -31,14 +32,20 @@ func main() {
 	fmt.Printf("Server run with options:\nHost: %s\nPort: %s\n\n", cfg.Net.Host, cfg.Net.Port)
 
 	go PrintMessengs(m)
-	Sendler(m)
+	SendMsg(m)
 }
 
-func Sendler(m *server.Messenger) {
+func SendMsg(m *server.Messenger) {
 	var msg string
-	for {
+	log.Print("Sender is runed.")
+	for !m.IsQuit() {
 		fmt.Scan(msg)
-		m.SendMessenge(msg)
+		if inputcontrol.IsCommand(msg) {
+			log.Println([]byte(msg))
+			m.DoCommand(msg)
+		} else {
+			m.SendMessenge(msg)
+		}
 	}
 }
 

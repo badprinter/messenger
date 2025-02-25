@@ -16,7 +16,7 @@ type Messenger struct {
 	cfg          *config.NetCofnig
 	service      net.Listener
 	lobby        *lobby.Lobby
-	stoperChan   chan bool
+	quitChan     chan bool // Когда в канал будет записано True, все горутины должны завершится
 	MessengeChan chan string
 }
 
@@ -30,6 +30,25 @@ func NewMessenger(cfg *config.BaseConfig) *Messenger {
 	}
 }
 
+func (m *Messenger) IsQuit() bool {
+	select {
+	case res := <-m.quitChan:
+		return res
+	default:
+		return false
+	}
+}
+
+// TODO вынести
+func (m *Messenger) DoCommand(cmd string) {
+	switch cmd {
+	case "/quit":
+		m.QuitMessanger()
+	case "/help":
+		println("Print help messange.")
+	}
+}
+
 func (m *Messenger) Run() error {
 	var err error
 	m.service, err = net.Listen("tcp", m.cfg.Host+":"+m.cfg.Port)
@@ -37,7 +56,7 @@ func (m *Messenger) Run() error {
 		return err
 	}
 	go m.lobbyManager()
-	go m.exitHandler(m.service, m.stoperChan)
+	go m.exitHandler()
 
 	return nil
 }
@@ -50,7 +69,7 @@ func (m *Messenger) SendMessenge(msg string) {
 }
 
 func (m *Messenger) lobbyManager() {
-	for isClose := false; !isClose; isClose = <-m.stoperChan {
+	for !m.IsQuit() {
 		c, err := m.service.Accept()
 		if err != nil {
 
@@ -59,13 +78,13 @@ func (m *Messenger) lobbyManager() {
 		}
 		m.lobby.Add(c)
 		log.Printf("Connect: %s is accept.", c.RemoteAddr().String())
-		go readMesseng(c, m.MessengeChan)
+		go m.readMesseng(c, m.MessengeChan)
 	}
 }
 
-func readMesseng(c net.Conn, ch chan string) {
+func (m *Messenger) readMesseng(c net.Conn, ch chan string) {
 	scanner := bufio.NewScanner(c)
-	for scanner.Scan() {
+	for scanner.Scan() || !m.IsQuit() {
 		if scanner.Err() != nil {
 			return
 		}
@@ -82,7 +101,7 @@ func (m *Messenger) GetMesseng() string {
 }
 
 // TODO переписать входные параметры
-func (m *Messenger) exitHandler(web net.Listener, stopChan chan bool) {
+func (m *Messenger) exitHandler() {
 	defer func() {
 		tunels := m.lobby.GetTunels()
 		if len(tunels) != 0 {
@@ -90,21 +109,24 @@ func (m *Messenger) exitHandler(web net.Listener, stopChan chan bool) {
 				v.Close()
 			}
 		}
-		web.Close()
+		m.service.Close()
 	}()
+
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	select {
-	case <-stopChan:
+	case <-m.quitChan:
 		log.Println("Close port by exit.")
-		return
 	case <-sigChan:
+		m.QuitMessanger()
 		log.Println("Close port by signal.")
-		return
 	}
 }
 
-func (m *Messenger) Stop() {
-	m.stoperChan <- true
+func (m *Messenger) QuitMessanger() {
+	m.quitChan <- true
+}
+
+func test_function(b bool) {
 }
