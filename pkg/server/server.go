@@ -127,6 +127,3 @@ func (m *Messenger) exitHandler() {
 func (m *Messenger) QuitMessanger() {
 	m.quitChan <- true
 }
-
-func test_function(b bool) {
-}
