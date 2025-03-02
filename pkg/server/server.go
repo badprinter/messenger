@@ -64,20 +64,16 @@ func (m *Messenger) Run() error {
 func (m *Messenger) SendMessenge(msg string) {
 	tunnels := m.lobby.GetTunels()
 	for _, v := range tunnels {
-		go v.Write([]byte(msg))
+		v.Write([]byte(msg))
 	}
 }
 
+// TODO когда програма завершается, эта функци продолжает работаь. ИСПРАВИТЬ!
 func (m *Messenger) lobbyManager() {
-	for !m.IsQuit() {
-		c, err := m.service.Accept()
-		if err != nil {
-
-			log.Println("lobbyManager ", err)
-			continue
-		}
+	c, err := m.service.Accept()
+	for ; !m.IsQuit() && err != nil; c, err = m.service.Accept() {
 		m.lobby.Add(c)
-		log.Printf("Connect: %s is accept.", c.RemoteAddr().String())
+		log.Printf("Connect: %s is accept.", c.RemoteAddr().String()) // <- вот тут паника сделать reverse
 		go m.readMesseng(c, m.MessengeChan)
 	}
 }

@@ -39,12 +39,13 @@ func SendMsg(m *server.Messenger) {
 	var msg string
 	log.Print("Sender is runed.")
 	for !m.IsQuit() {
-		fmt.Scan(msg)
-		if inputcontrol.IsCommand(msg) {
-			log.Println([]byte(msg))
-			m.DoCommand(msg)
-		} else {
-			m.SendMessenge(msg)
+		res, err := fmt.Scanf("%s", &msg)
+		if res > 0 && err == nil {
+			if inputcontrol.IsCommand(msg) {
+				m.DoCommand(msg)
+			} else {
+				m.SendMessenge(msg)
+			}
 		}
 	}
 }
