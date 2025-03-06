@@ -9,7 +9,7 @@ import (
 
 type ManagerServer struct {
 	listener net.Listener
-	conns    []net.Conn
+	Users    *Lobby
 }
 
 func NewMessengerServer(cfg config.BaseConfig) (*ManagerServer, error) {
@@ -19,7 +19,7 @@ func NewMessengerServer(cfg config.BaseConfig) (*ManagerServer, error) {
 	}
 	return &ManagerServer{
 		lis,
-		[]net.Conn{},
+		NewLobby(),
 	}, nil
 }
 
@@ -35,8 +35,8 @@ func (m *ManagerServer) acceptConnect() {
 		if err != nil {
 			log.Println(err)
 		} else {
-			m.conns = append(m.conns, conn) // TODO вынести в новую структуру с Mutex
-			go m.getMessenge(conn)          // TODO рутина
+			m.Users.Add(conn)
+			go m.getMessenge(conn) // TODO рутина
 		}
 	}
 }
@@ -47,16 +47,11 @@ func (m *ManagerServer) getMessenge(conn net.Conn) {
 		if scanner.Err() != nil {
 			log.Println(scanner.Err())
 		} else {
-			m.SendMessenge(conn, scanner.Text())
+			m.Send(conn, scanner.Text())
 		}
 	}
 }
 
-func (m *ManagerServer) SendMessenge(sendler net.Conn, msg string) {
-	messenge := append([]byte(msg), '\n')
-	for _, conn := range m.conns {
-		if sendler.RemoteAddr().String() != conn.RemoteAddr().String() {
-			conn.Write(messenge)
-		}
-	}
+func (m *ManagerServer) Send(sandler net.Conn, msg string) {
+	m.Users.Broadcast(sandler, msg)
 }
