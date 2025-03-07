@@ -6,14 +6,11 @@ import (
 	"github.com/badprinter/messenger/internal/MessengerServer"
 	"github.com/badprinter/messenger/internal/config"
 	"log"
-	"net"
 )
 
 var (
 	configPath = flag.String("config", "settings.toml", "path to config file")
 )
-
-var conns []net.Conn
 
 func main() {
 	flag.Parse()
@@ -29,5 +26,4 @@ func main() {
 	}
 
 	server.Start()
-
 }
