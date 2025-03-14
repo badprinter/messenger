@@ -7,17 +7,17 @@ import (
 
 type Lobby struct {
 	sync.Mutex
-	array []user.User
+	array []user.User // map
 }
 
 func NewLobby() *Lobby {
 	return &Lobby{}
 }
 
-func (l *Lobby) Add(User user.User) {
+func (l *Lobby) Add(User *user.User) {
 	l.Lock()
 	defer l.Unlock()
-	l.array = append(l.array, User)
+	l.array = append(l.array, *User)
 }
 
 func (l *Lobby) RemoveConnection(User user.User) {
@@ -42,10 +42,9 @@ func (l *Lobby) CloseAll() {
 }
 
 func (l *Lobby) Broadcast(who user.User, msg string) {
-	send := append([]byte(msg), '\n')
 	for _, u := range l.array {
 		if u.GetIP() != who.GetIP() {
-			u.Write(send)
+			u.Say(msg + "\n")
 		}
 	}
 }

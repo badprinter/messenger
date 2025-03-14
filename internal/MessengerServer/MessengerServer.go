@@ -3,6 +3,7 @@ package MessengerServer
 import (
 	"bufio"
 	"github.com/badprinter/messenger/internal/config"
+	"github.com/badprinter/messenger/internal/user"
 	"log"
 	"net"
 )
@@ -35,13 +36,14 @@ func (m *ManagerServer) acceptConnect() {
 		if err != nil {
 			log.Println(err)
 		} else {
-			m.Users.Add(conn)
-			go m.getMessenge(conn) // TODO рутина
+			u := user.NewUserWithParam("", conn) // TODO переписать после того как будет обработка первого подключение и получение username
+			m.Users.Add(u)
+			go m.getMessenge(u) // TODO рутина
 		}
 	}
 }
 
-func (m *ManagerServer) getMessenge(conn net.Conn) {
+func (m *ManagerServer) getMessenge(User *user.User) {
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() { // TODO !m.Quit()
 		if scanner.Err() != nil {
